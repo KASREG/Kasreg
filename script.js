@@ -27,7 +27,8 @@ const card3Elem = document.querySelector('#card3-image');
 const resultElem = document.getElementById('result');
 const dealBtn = document.getElementById('deal-btn');
 const playAgainBtn = document.getElementById('play-again-btn');
-const doubleOrFoldBtn = document.createElement('button');
+const doubleBtn = document.getElementById('double-btn');
+const forfeitBtn = document.getElementById('forfeit-btn');
 const betInput = document.getElementById('bet');
 const walletElem = document.createElement('div');
 
@@ -35,27 +36,13 @@ const walletElem = document.createElement('div');
 document.body.prepend(walletElem);
 updateWalletDisplay();
 
-// Add the "Double Bet or Forfeit" button dynamically
-doubleOrFoldBtn.textContent = 'Double to See Third Card or Forfeit Bet';
-doubleOrFoldBtn.style.display = 'none';
-document.body.appendChild(doubleOrFoldBtn);
-
 let card1, card2, card3;
 
 function dealCards() {
     const shuffledDeck = [...deck].sort(() => Math.random() - 0.5);
     
-    // Check if doubleNextRound is true to double the bet
-    if (doubleNextRound) {
-        betAmount *= 2;
-        doubleNextRound = false;
-    } else {
-        betAmount = Number(betInput.value);
-    }
-
-    // Deduct bet amount from the wallet
-    walletBalance -= betAmount;
-    updateWalletDisplay();
+    // Get the bet amount, but don't deduct it yet
+    betAmount = Number(betInput.value);
 
     // Dealer deals two cards
     card1 = shuffledDeck.pop();
@@ -65,51 +52,57 @@ function dealCards() {
     card1Elem.src = card1.img;
     card2Elem.src = card2.img;
     card3Elem.src = '';
+    card3Elem.style.display = 'none';  // Hide third card initially
     resultElem.textContent = '';
+
+    // Display the decision buttons (Double or Forfeit)
+    doubleBtn.style.display = 'block';
+    forfeitBtn.style.display = 'block';
+    dealBtn.style.display = 'none';
 
     if (card1.value === card2.value) {
         resultElem.textContent = "It's a tie! You get your money back.";
-        walletBalance += betAmount;  // Return the bet
-        updateWalletDisplay();
         playAgainBtn.style.display = 'block';
-        dealBtn.style.display = 'none';
+        doubleBtn.style.display = 'none';
+        forfeitBtn.style.display = 'none';
     } else if (Math.abs(card1.value - card2.value) === 1) {
         resultElem.textContent = "The cards are consecutive. You lose this round.";
-        playAgainBtn.style.display = 'block';
-        dealBtn.style.display = 'none';
-    } else {
-        resultElem.textContent = `You can either double your bet to see the third card or forfeit your initial bet.`;
-        doubleOrFoldBtn.style.display = 'block';
-        dealBtn.style.display = 'none';
-        doubleOrFoldBtn.onclick = doubleOrFoldDecision;
-    }
-}
-
-function doubleOrFoldDecision() {
-    // Ask the player if they want to double their bet or forfeit
-    const decision = confirm('Do you want to double your bet to see the third card?');
-    
-    if (decision) {
-        // Double the bet and deduct from wallet
         walletBalance -= betAmount;
-        betAmount *= 2;
         updateWalletDisplay();
-        dealThirdCard(); // Continue to deal the third card
-    } else {
-        resultElem.textContent = "You forfeited your initial bet!";
-        doubleOrFoldBtn.style.display = 'none';
         playAgainBtn.style.display = 'block';
+        doubleBtn.style.display = 'none';
+        forfeitBtn.style.display = 'none';
     }
 }
 
+// Decision to double the bet and see the third card
+doubleBtn.addEventListener('click', function() {
+    walletBalance -= betAmount; // Deduct the initial bet
+    betAmount *= 2; // Double the bet
+    updateWalletDisplay();
+    dealThirdCard();
+});
+
+// Decision to forfeit the initial bet
+forfeitBtn.addEventListener('click', function() {
+    walletBalance -= betAmount; // Forfeit the initial bet
+    updateWalletDisplay();
+    resultElem.textContent = "You forfeited your initial bet.";
+    doubleBtn.style.display = 'none';
+    forfeitBtn.style.display = 'none';
+    playAgainBtn.style.display = 'block';
+});
+
+// Deal the third card
 function dealThirdCard() {
     const shuffledDeck = [...deck].sort(() => Math.random() - 0.5);
     
     // Dealer deals the third card
     card3 = shuffledDeck.pop();
 
-    // Show the card image
+    // Show the third card image
     card3Elem.src = card3.img;
+    card3Elem.style.display = 'block';
 
     const low = Math.min(card1.value, card2.value);
     const high = Math.max(card1.value, card2.value);
@@ -126,7 +119,8 @@ function dealThirdCard() {
 
     updateWalletDisplay();
     playAgainBtn.style.display = 'block';
-    doubleOrFoldBtn.style.display = 'none';
+    doubleBtn.style.display = 'none';
+    forfeitBtn.style.display = 'none';
 }
 
 function playAgain() {
@@ -136,6 +130,7 @@ function playAgain() {
     card1Elem.src = '';
     card2Elem.src = '';
     card3Elem.src = '';
+    card3Elem.style.display = 'none';
     resultElem.textContent = '';
 }
 
